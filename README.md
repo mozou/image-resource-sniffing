@@ -26,7 +26,7 @@ python selenium_sniffer.py
 ```
 
 ### 3. 使用步骤
-1. 在网址框输入要嗅探的URL（如：`https://arca.live/b/umamusume/144007842`）
+1. 在网址框输入要嗅探的URL
 2. 设置最小图片大小（默认10KB）
 3. 选择浏览器模式（推荐静默模式）
 4. 点击"开始嗅探"
