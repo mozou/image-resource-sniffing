@@ -48,10 +48,18 @@ jobs:
           unzip \
           zip \
           libc6-dev \
-          libncurses5 \
+          libncurses6 \
           libstdc++6 \
           lib32z1 \
-          libbz2-1.0
+          libbz2-1.0 \
+          autoconf \
+          automake \
+          cmake \
+          gettext \
+          libffi-dev \
+          libssl-dev \
+          libtool \
+          pkg-config
           
     - name: 缓存pip依赖
       uses: actions/cache@v4
