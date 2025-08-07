@@ -85,7 +85,9 @@ jobs:
         # 安装python-for-android的所有必需依赖
         pip install appdirs colorama jinja2 six packaging
         pip install sh pexpect setuptools wheel
-        pip install distlib toml
+        pip install distlib toml build
+        # 安装其他可能需要的依赖
+        pip install importlib-metadata zipp
         
     - name: 构建APK
       run: |
@@ -142,20 +144,14 @@ jobs:
         python -c "import appdirs; print('appdirs version:', appdirs.__version__)" || echo "appdirs not found"
         python -c "import buildozer; print('buildozer version:', buildozer.__version__)" || echo "buildozer not found"
         python -c "import kivy; print('kivy version:', kivy.__version__)" || echo "kivy not found"
+        python -c "import build; print('build module found')" || echo "build not found"
         
-        # 强制使用特定的python-for-android版本以避免SDK工具问题
-        export P4A_RELEASE_TAG=release-2023.06.21
+        # 不强制使用特定版本，让buildozer自动选择
+        # export P4A_RELEASE_TAG=release-2023.06.21
         
         # 构建debug版本，使用更兼容的配置
         echo "开始构建APK..."
-        timeout 3600 buildozer android debug --verbose || {
-          echo "构建失败，显示详细错误信息..."
-          echo "检查.buildozer目录结构:"
-          find .buildozer -name "*.log" -exec echo "=== {} ===" \; -exec cat {} \; 2>/dev/null || true
-          echo "尝试清理并重新构建..."
-          buildozer android clean
-          timeout 3600 buildozer android debug --verbose
-        }
+        buildozer android debug --verbose
         
         # 检查APK是否生成成功
         echo "检查生成的文件:"

@@ -128,8 +128,8 @@ p4a.whitelist =
 p4a.setup_py = False
 
 # (str) python-for-android specific commit to use, defaults to HEAD, must be within p4a.branch
-# 使用稳定的release版本
-p4a.commit = release-2023.06.21
+# 使用更稳定的旧版本
+p4a.commit = HEAD
 
 # (str) Bootstrap to use for android builds
 p4a.bootstrap = sdl2
