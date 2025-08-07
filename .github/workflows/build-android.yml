@@ -72,6 +72,23 @@ jobs:
         
     - name: 构建APK
       run: |
+        # 显示当前目录和文件
+        echo "当前工作目录:"
+        pwd
+        echo "目录内容:"
+        ls -la
+        
+        # 检查必要文件是否存在
+        if [ ! -f "buildozer.spec" ]; then
+          echo "错误: buildozer.spec 文件不存在"
+          exit 1
+        fi
+        
+        if [ ! -f "main.py" ]; then
+          echo "错误: main.py 文件不存在"
+          exit 1
+        fi
+        
         # 设置环境变量
         export JAVA_HOME=$JAVA_HOME_11_X64
         export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
@@ -86,17 +103,28 @@ jobs:
         echo "Buildozer版本:"
         buildozer version
         
+        # 初始化buildozer（如果需要）
+        echo "初始化Buildozer..."
+        buildozer init || echo "Buildozer已初始化或使用现有配置"
+        
         # 构建debug版本
+        echo "开始构建APK..."
         buildozer android debug --verbose
         
         # 检查APK是否生成成功
-        if [ ! -f bin/*.apk ]; then
-          echo "错误: APK文件未生成"
+        echo "检查生成的文件:"
+        ls -la
+        if [ -d "bin" ]; then
+          echo "bin目录内容:"
+          ls -la bin/
+          if [ ! -f bin/*.apk ]; then
+            echo "错误: APK文件未生成"
+            exit 1
+          fi
+        else
+          echo "错误: bin目录不存在"
           exit 1
         fi
-        
-        # 显示APK信息
-        ls -la bin/
         
     - name: 上传APK文件
       uses: actions/upload-artifact@v4
