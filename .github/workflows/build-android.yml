@@ -116,8 +116,11 @@ jobs:
         echo "Buildozer版本:"
         buildozer version
         
+        # 创建buildozer目录结构
+        mkdir -p $HOME/.buildozer/android/platform
+        
         # 预先接受Android SDK许可证
-        echo "接受Android SDK许可证..."
+        echo "预先接受Android SDK许可证..."
         mkdir -p $ANDROID_HOME/licenses
         echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-license
         echo "84831b9409646a918e30573bab4c9c91346d8abd" > $ANDROID_HOME/licenses/android-sdk-preview-license
@@ -126,13 +129,13 @@ jobs:
         echo "33b6a2b64607f11b759f320ef9dff4ae5c47d97a" > $ANDROID_HOME/licenses/google-gdk-license
         echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $ANDROID_HOME/licenses/mips-android-sysimage-license
         
-        # 初始化buildozer（如果需要）
-        echo "初始化Buildozer..."
-        buildozer init || echo "Buildozer已初始化或使用现有配置"
+        # 设置buildozer环境变量以避免交互式提示
+        export BUILDOZER_WARN_ON_ROOT=0
+        export ANDROID_ACCEPT_SDK_LICENSE=y
         
-        # 构建debug版本
+        # 构建debug版本（不使用yes命令，而是设置环境变量）
         echo "开始构建APK..."
-        yes | buildozer android debug --verbose
+        buildozer android debug --verbose
         
         # 检查APK是否生成成功
         echo "检查生成的文件:"
