@@ -41,16 +41,19 @@ fullscreen = 0
 android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE,ACCESS_NETWORK_STATE
 
 # (int) Target Android API, should be as high as possible.
-android.api = 30
+android.api = 33
 
 # (int) Minimum API your APK will support.
 android.minapi = 21
 
 # (str) Android NDK version to use
-android.ndk = 23b
+android.ndk = 25b
 
 # (str) Android SDK version to use
-android.sdk = 30
+android.sdk = 33
+
+# (str) Android build tools version to use
+android.build_tools = 33.0.2
 
 # (bool) Use --private data storage (True) or --dir public storage (False)
 android.private_storage = False
@@ -120,7 +123,23 @@ p4a.whitelist =
 p4a.setup_py = False
 
 # (str) extra command line arguments to pass when invoking pythonforandroid.toolchain
-p4a.extra_args =
+p4a.extra_args = --private $HOME/.buildozer/android/platform/build-$APP_ARCH/dists/$DIST_NAME/private
+
+# (str) Bootstrap to use for android builds
+p4a.bootstrap = sdl2
+
+# (int) port number to specify an explicit --port= p4a argument (eg for bootstrap flask)
+#p4a.port =
+
+# Control passing the --use-setup-py vs --ignore-setup-py to p4a
+# "in the future" --use-setup-py is going to be the default behaviour in p4a, right now it is not
+# Setting this to false will pass --ignore-setup-py, true will pass --use-setup-py
+# NOTE: this is general setuptools integration, having pyproject.toml is enough, no need to generate
+# setup.py if you're using Poetry, but you need to add "toml" to source.include_exts.
+#p4a.setup_py = false
+
+# (str) extra command line arguments to pass when invoking pythonforandroid.toolchain
+#p4a.extra_args =
 
 [buildozer]
 

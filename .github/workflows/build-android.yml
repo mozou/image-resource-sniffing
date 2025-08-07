@@ -24,7 +24,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
-        java-version: '11'
+        java-version: '17'  # 使用Java 17以支持最新的Android构建工具
         
     - name: 安装系统依赖
       run: |
@@ -46,7 +46,12 @@ jobs:
           libgstreamer-plugins-base1.0-dev \
           libgstreamer-plugins-good1.0-dev \
           unzip \
-          zip
+          zip \
+          libc6-dev \
+          libncurses5 \
+          libstdc++6 \
+          lib32z1 \
+          libbz2-1.0
           
     - name: 缓存pip依赖
       uses: actions/cache@v4
@@ -90,10 +95,10 @@ jobs:
         fi
         
         # 设置环境变量
-        export JAVA_HOME=$JAVA_HOME_11_X64
+        export JAVA_HOME=$JAVA_HOME_17_X64
         export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
         export ANDROID_SDK_ROOT=$ANDROID_HOME
-        export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+        export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin
         
         # 显示环境信息
         echo "Java版本:"
@@ -103,13 +108,23 @@ jobs:
         echo "Buildozer版本:"
         buildozer version
         
+        # 预先接受Android SDK许可证
+        echo "接受Android SDK许可证..."
+        mkdir -p $ANDROID_HOME/licenses
+        echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-license
+        echo "84831b9409646a918e30573bab4c9c91346d8abd" > $ANDROID_HOME/licenses/android-sdk-preview-license
+        echo "d975f751698a77b662f1254ddbeed3901e976f5a" > $ANDROID_HOME/licenses/intel-android-extra-license
+        echo "601085b94cd77f0b54ff86406957099ebe79c4d6" > $ANDROID_HOME/licenses/android-googletv-license
+        echo "33b6a2b64607f11b759f320ef9dff4ae5c47d97a" > $ANDROID_HOME/licenses/google-gdk-license
+        echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $ANDROID_HOME/licenses/mips-android-sysimage-license
+        
         # 初始化buildozer（如果需要）
         echo "初始化Buildozer..."
         buildozer init || echo "Buildozer已初始化或使用现有配置"
         
         # 构建debug版本
         echo "开始构建APK..."
-        buildozer android debug --verbose
+        yes | buildozer android debug --verbose
         
         # 检查APK是否生成成功
         echo "检查生成的文件:"
