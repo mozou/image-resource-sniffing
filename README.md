@@ -35,17 +35,17 @@
 
 我们提供了多种构建方案：
 
-**方案一：Docker自动构建**
+**方案一：最终构建方案（推荐）**
 ```bash
 git add .
 git commit -m "更新代码"
 git push origin main
 ```
-推送后会自动使用Docker构建APK，避免环境配置问题。
+使用最简化的构建配置，避免复杂的依赖问题。
 
-**方案二：手动触发备用构建**
+**方案二：手动触发构建**
 1. 进入GitHub仓库的Actions页面
-2. 选择"构建Android APK (备用方案)"
+2. 选择"构建Android APK (最终方案)"
 3. 点击"Run workflow"手动触发
 
 **方案三：本地构建**
@@ -57,6 +57,8 @@ chmod +x build_local.sh
 # Windows
 build_local.bat
 ```
+
+**注意**: 如果需要更简单的版本，可以使用`main_simple.py`替换`main.py`
 
 详细说明请参考：[README_GITHUB_ACTIONS.md](README_GITHUB_ACTIONS.md)
 
