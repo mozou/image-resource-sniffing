@@ -37,7 +37,12 @@ jobs:
             openjdk-8-jdk \
             wget \
             curl \
+            sudo \
             && rm -rf /var/lib/apt/lists/*
+
+        # 创建非root用户
+        RUN useradd -m -s /bin/bash builduser && \
+            echo "builduser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
         # 设置Java环境
         ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
@@ -46,14 +51,15 @@ jobs:
         RUN pip3 install --upgrade pip
         RUN pip3 install buildozer==1.4.0 cython==0.29.33 kivy==2.1.0 requests
 
-        # 创建工作目录
-        WORKDIR /app
+        # 切换到非root用户
+        USER builduser
+        WORKDIR /home/builduser/app
 
         # 复制项目文件
-        COPY . /app/
+        COPY --chown=builduser:builduser . /home/builduser/app/
 
-        # 设置权限
-        RUN chmod -R 755 /app
+        # 设置环境变量禁用buildozer root警告
+        ENV BUILDOZER_WARN_ON_ROOT=0
 
         # 构建APK
         CMD ["buildozer", "android", "debug"]
@@ -63,17 +69,24 @@ jobs:
         echo "🔨 构建Docker镜像..."
         docker build -t image-sniffer-build .
         
+        # 创建bin目录
+        mkdir -p bin
+        
         # 运行容器构建APK
         echo "🚀 开始构建APK..."
-        docker run --name build-container -v $(pwd)/bin:/app/bin image-sniffer-build
+        docker run --name build-container \
+          -v $(pwd)/bin:/home/builduser/app/bin \
+          -e BUILDOZER_WARN_ON_ROOT=0 \
+          image-sniffer-build
         
         # 检查构建结果
-        if [ -f "bin/*.apk" ]; then
+        if ls bin/*.apk 1> /dev/null 2>&1; then
           echo "🎉 构建成功！"
           ls -la bin/
         else
           echo "❌ 构建失败，检查容器日志..."
           docker logs build-container
+          exit 1
         fi
         
         # 清理容器
