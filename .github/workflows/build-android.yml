@@ -82,9 +82,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install buildozer cython
         pip install -r requirements.txt
-        # 安装python-for-android的额外依赖
-        pip install appdirs colorama jinja2 six
-        pip install sh pexpect
+        # 安装python-for-android的所有必需依赖
+        pip install appdirs colorama jinja2 six packaging
+        pip install sh pexpect setuptools wheel
+        pip install distlib toml
         
     - name: 构建APK
       run: |

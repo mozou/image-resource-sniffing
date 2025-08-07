@@ -49,8 +49,7 @@ android.minapi = 21
 # (str) Android NDK version to use
 android.ndk = 23b
 
-# (str) Android SDK version to use
-android.sdk = 31
+# 注意：android.sdk 配置项已弃用，由buildozer自动管理
 
 # (str) Android build tools version to use
 android.build_tools = 31.0.0
@@ -61,7 +60,8 @@ android.build_tools = 31.0.0
 android.enable_androidx = False
 
 # (str) Android arch to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
-android.archs = arm64-v8a, armeabi-v7a
+# 先只构建arm64-v8a架构以减少构建时间和复杂度
+android.archs = arm64-v8a
 
 # (bool) Use --private data storage (True) or --dir public storage (False)
 android.private_storage = False
