@@ -5,7 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   build-android:
@@ -15,158 +15,37 @@ jobs:
     - name: 检出代码
       uses: actions/checkout@v4
       
-    - name: 设置Python环境
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.9'
-        
-    - name: 设置Java环境
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'  # 使用Java 17以支持最新的Android构建工具
-        
-    - name: 安装系统依赖
+    - name: 构建APK使用Docker
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          build-essential \
-          git \
-          ffmpeg \
-          libsdl2-dev \
-          libsdl2-image-dev \
-          libsdl2-mixer-dev \
-          libsdl2-ttf-dev \
-          libportmidi-dev \
-          libswscale-dev \
-          libavformat-dev \
-          libavcodec-dev \
-          zlib1g-dev \
-          libgstreamer1.0-dev \
-          libgstreamer-plugins-base1.0-dev \
-          libgstreamer-plugins-good1.0-dev \
-          unzip \
-          zip \
-          libc6-dev \
-          libncurses6 \
-          libstdc++6 \
-          lib32z1 \
-          libbz2-1.0 \
-          autoconf \
-          automake \
-          cmake \
-          gettext \
-          libffi-dev \
-          libssl-dev \
-          libtool \
-          pkg-config
-          
-    - name: 缓存pip依赖
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-          
-    - name: 缓存buildozer目录
-      uses: actions/cache@v4
-      with:
-        path: .buildozer
-        key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
-        restore-keys: |
-          ${{ runner.os }}-buildozer-
-          
-    - name: 安装Python依赖
-      run: |
-        python -m pip install --upgrade pip
-        pip install buildozer cython
-        pip install -r requirements.txt
-        # 安装python-for-android的所有必需依赖
-        pip install appdirs colorama jinja2 six packaging
-        pip install sh pexpect setuptools wheel
-        pip install distlib toml build
-        # 安装其他可能需要的依赖
-        pip install importlib-metadata zipp
-        
-    - name: 构建APK
-      run: |
-        # 显示当前目录和文件
-        echo "当前工作目录:"
-        pwd
-        echo "目录内容:"
-        ls -la
-        
-        # 检查必要文件是否存在
-        if [ ! -f "buildozer.spec" ]; then
-          echo "错误: buildozer.spec 文件不存在"
-          exit 1
-        fi
-        
-        if [ ! -f "main.py" ]; then
-          echo "错误: main.py 文件不存在"
-          exit 1
-        fi
-        
+        # 创建Dockerfile
+        cat > Dockerfile << 'EOF'
+        FROM kivy/buildozer:latest
+
+        # 设置工作目录
+        WORKDIR /app
+
+        # 复制项目文件
+        COPY . /app/
+
         # 设置环境变量
-        export JAVA_HOME=$JAVA_HOME_17_X64
-        export ANDROID_HOME=$HOME/.buildozer/android/platform/android-sdk
-        export ANDROID_SDK_ROOT=$ANDROID_HOME
-        export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin
+        ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+        ENV ANDROID_HOME=/home/user/.buildozer/android/platform/android-sdk
+        ENV ANDROID_SDK_ROOT=$ANDROID_HOME
+        ENV PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+
+        # 构建APK
+        RUN buildozer android debug
+        EOF
         
-        # 显示环境信息
-        echo "Java版本:"
-        java -version
-        echo "Python版本:"
-        python --version
-        echo "Buildozer版本:"
-        buildozer version
+        # 构建Docker镜像并运行
+        docker build -t image-sniffer-build .
+        docker run --name build-container image-sniffer-build
         
-        # 创建buildozer目录结构
-        mkdir -p $HOME/.buildozer/android/platform
+        # 从容器中复制APK文件
+        docker cp build-container:/app/bin ./bin
         
-        # 预先接受Android SDK许可证
-        echo "预先接受Android SDK许可证..."
-        mkdir -p $ANDROID_HOME/licenses
-        echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-license
-        echo "84831b9409646a918e30573bab4c9c91346d8abd" > $ANDROID_HOME/licenses/android-sdk-preview-license
-        echo "d975f751698a77b662f1254ddbeed3901e976f5a" > $ANDROID_HOME/licenses/intel-android-extra-license
-        echo "601085b94cd77f0b54ff86406957099ebe79c4d6" > $ANDROID_HOME/licenses/android-googletv-license
-        echo "33b6a2b64607f11b759f320ef9dff4ae5c47d97a" > $ANDROID_HOME/licenses/google-gdk-license
-        echo "8933bad161af4178b1185d1a37fbf41ea5269c55" > $ANDROID_HOME/licenses/mips-android-sysimage-license
-        
-        # 设置buildozer环境变量以避免交互式提示
-        export BUILDOZER_WARN_ON_ROOT=0
-        export ANDROID_ACCEPT_SDK_LICENSE=y
-        
-        # 显示Python模块信息
-        echo "检查Python模块..."
-        python -c "import appdirs; print('appdirs version:', appdirs.__version__)" || echo "appdirs not found"
-        python -c "import buildozer; print('buildozer version:', buildozer.__version__)" || echo "buildozer not found"
-        python -c "import kivy; print('kivy version:', kivy.__version__)" || echo "kivy not found"
-        python -c "import build; print('build module found')" || echo "build not found"
-        
-        # 不强制使用特定版本，让buildozer自动选择
-        # export P4A_RELEASE_TAG=release-2023.06.21
-        
-        # 构建debug版本，使用更兼容的配置
-        echo "开始构建APK..."
-        buildozer android debug --verbose
-        
-        # 检查APK是否生成成功
-        echo "检查生成的文件:"
-        ls -la
-        if [ -d "bin" ]; then
-          echo "bin目录内容:"
-          ls -la bin/
-          if [ ! -f bin/*.apk ]; then
-            echo "错误: APK文件未生成"
-            exit 1
-          fi
-        else
-          echo "错误: bin目录不存在"
-          exit 1
-        fi
+        # 清理容器
+        docker rm build-container
         
     - name: 上传APK文件
       uses: actions/upload-artifact@v4
@@ -175,24 +54,32 @@ jobs:
         path: bin/*.apk
         retention-days: 30
         
-    - name: 创建Release（仅在推送到main分支时）
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    - name: 创建Release
+      if: github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ github.run_number }}
         name: 图片资源嗅探工具 v${{ github.run_number }}
         body: |
-          ## 更新内容
-          - 自动构建的Android APK
-          - 构建时间: ${{ github.event.head_commit.timestamp }}
-          - 提交信息: ${{ github.event.head_commit.message }}
+          ## 📱 Android APK 自动构建
           
-          ## 安装说明
+          这是通过GitHub Actions自动构建的Android APK文件。
+          
+          ### 📋 版本信息
+          - 构建时间: ${{ github.event.head_commit.timestamp }}
+          - 提交SHA: ${{ github.sha }}
+          - 构建编号: ${{ github.run_number }}
+          
+          ### 📥 安装说明
           1. 下载下方的APK文件
           2. 在Android设备上启用"未知来源"应用安装
-          3. 安装APK文件
-          4. 首次运行时授予网络和存储权限
+          3. 安装APK并授予必要权限
+          4. 开始使用图片资源嗅探功能
           
+          ### ⚠️ 注意事项
+          - 需要Android 5.0+（API 21+）
+          - 需要网络和存储权限
+          - 图片保存在下载目录
         files: bin/*.apk
         draft: false
         prerelease: false
