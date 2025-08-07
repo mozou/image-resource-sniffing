@@ -1,6 +1,17 @@
+# 应用依赖
 kivy>=2.1.0
 requests>=2.25.0
 urllib3>=1.26.0
 certifi>=2021.5.25
 charset-normalizer>=2.0.0
 idna>=3.2
+
+# 构建依赖（用于本地开发）
+buildozer>=1.5.0
+cython>=0.29.0
+appdirs>=1.4.0
+colorama>=0.4.0
+jinja2>=3.0.0
+six>=1.16.0
+sh>=1.14.0
+pexpect>=4.8.0
