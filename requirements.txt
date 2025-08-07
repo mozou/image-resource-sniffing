@@ -1,0 +1,6 @@
+kivy>=2.1.0
+requests>=2.25.0
+urllib3>=1.26.0
+certifi>=2021.5.25
+charset-normalizer>=2.0.0
+idna>=3.2
