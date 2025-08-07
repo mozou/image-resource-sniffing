@@ -1,115 +1,151 @@
 # 图片资源嗅探工具
 
-这是一个用于自动嗅探网页中所有图片资源的工具，支持嗅探完成后预览和批量下载。**特别针对Android移动端进行了优化，支持打包成APK在手机上运行。**
+一个功能强大的网页图片资源嗅探工具，支持Python脚本和Web版本两种使用方式。
 
 ## 🌟 功能特点
 
-- 🔍 根据输入的链接，自动嗅探该链接中的所有图片资源
+- 🔍 智能嗅探网页中的所有图片资源
 - ⏱️ 支持等待所有图片加载完成
 - 🔄 处理懒加载的图片资源（data-src属性）
 - 🖼️ 尝试获取原始图片而非压缩版本
 - 📏 支持按图片大小过滤（排除小于指定大小的图片）
 - 👀 支持图片预览和批量下载
-- 📱 **移动端友好的触摸界面**
-- 🤖 **支持打包成Android APK**
-- ☁️ **GitHub Actions自动构建**
-
-## 📱 Android版本（推荐）
-
-### 快速获取APK
-
-1. **从GitHub Releases下载**（推荐）
-   - 访问本项目的[Releases页面](../../releases)
-   - 下载最新版本的APK文件
-
-2. **自动构建**
-   - Fork本项目到您的GitHub账户
-   - 推送代码会自动触发构建
-   - 在Actions页面下载构建好的APK
-
-### 本地构建APK
-
-如果您想本地构建，请参考 [README_ANDROID.md](README_ANDROID.md) 的详细说明。
-
-### GitHub Actions构建（推荐）
-
-我们提供了多种构建方案：
-
-**方案一：最终构建方案（推荐）**
-```bash
-git add .
-git commit -m "更新代码"
-git push origin main
-```
-使用最简化的构建配置，避免复杂的依赖问题。
-
-**方案二：手动触发构建**
-1. 进入GitHub仓库的Actions页面
-2. 选择"构建Android APK (最终方案)"
-3. 点击"Run workflow"手动触发
-
-**方案三：本地构建**
-```bash
-# Linux/Mac
-chmod +x build_local.sh
-./build_local.sh
-
-# Windows
-build_local.bat
-```
-
-**注意**: 如果需要更简单的版本，可以使用`main_simple.py`替换`main.py`
-
-详细说明请参考：[README_GITHUB_ACTIONS.md](README_GITHUB_ACTIONS.md)
-
-## 🔧 技术架构
-
-### 移动端版本 (main.py)
-- **框架**: Kivy（跨平台移动应用框架）
-- **网络**: requests + 正则表达式解析
-- **优势**: 轻量级、无需浏览器、适合移动端、支持Android打包
-
-
-## 📂 项目结构
-
-```
-image_resource_sniffing/
-├── main.py                   # Android版本主文件
-├── buildozer.spec           # Android构建配置
-├── requirements.txt         # Python依赖
-├── .github/workflows/       # GitHub Actions配置
-├── README.md                # 主说明文档
-├── README_ANDROID.md        # Android版本说明
-└── README_GITHUB_ACTIONS.md # GitHub Actions说明
-```
+- 💻 提供GUI和命令行两种界面
+- 📱 Web版本支持所有设备
 
 ## 🚀 快速开始
 
-### 方式一：直接使用APK（推荐）
-1. 从[Releases页面](../../releases)下载APK
-2. 在Android设备上安装
-3. 授予网络和存储权限
-4. 开始使用
+### 方式一：Python脚本（推荐）
 
-### 方式二：Fork并自动构建
-1. Fork本项目
-2. 推送代码到您的仓库
-3. GitHub Actions自动构建APK
-4. 从您的仓库Releases页面下载
+#### 安装依赖
+```bash
+pip install -r requirements.txt
+```
 
-### 方式三：本地运行移动端版本
-1. 克隆项目：`git clone ...`
-2. 安装依赖：`pip install -r requirements.txt`
-3. 运行：`python main.py`
+#### GUI模式（图形界面）
+```bash
+python image_sniffer.py
+```
 
-## 📋 注意事项
+#### 命令行模式
+```bash
+# 基本使用
+python image_sniffer.py --cli --url https://example.com
 
-1. **Android版本**：
-   - 需要Android 5.0+（API 21+）
-   - 首次运行需要授予网络和存储权限
-   - 图片保存在 `/sdcard/Download/ImageSniffer/` 目录
+# 完整参数
+python image_sniffer.py --cli --url https://example.com --min-size 10 --wait-time 5 --output results.json --download-dir ./images
+```
 
-2. **通用注意事项**：
-   - 请遵守网站的robots.txt和使用条款
-   - 不要用于商业用途或侵犯版权
-   - 建议设置合理的请求间隔，避免对服务器造成压力
+### 方式二：Web版本
+
+直接用浏览器打开 `web_version.html` 即可使用，支持所有设备。
+
+## 📋 参数说明
+
+### 命令行参数
+- `--cli`: 使用命令行模式
+- `--url`: 要嗅探的网页URL（必需）
+- `--min-size`: 最小图片大小（KB），默认为10KB
+- `--wait-time`: 页面加载等待时间（秒），默认为5秒
+- `--output`: 输出结果的JSON文件路径（可选）
+- `--download-dir`: 图片下载目录（可选）
+
+### GUI界面功能
+- 输入网址和参数
+- 实时进度显示
+- 图片列表展示
+- 双击预览图片
+- 单张或批量下载
+- 自定义下载目录
+
+## 🔧 核心功能
+
+### 智能嗅探算法
+- 提取img标签中的src属性
+- 支持懒加载图片（data-src属性）
+- 提取CSS背景图片
+- 提取链接中的图片资源
+- 自动去重和过滤
+
+### 原图获取
+- 智能识别缩略图URL模式
+- 自动尝试获取原始大图
+- 支持多种常见的缩略图命名规则
+
+### 并发处理
+- 多线程并发获取图片信息
+- 带重试机制的网络请求
+- 智能超时处理
+
+## 📁 文件说明
+
+- `image_sniffer.py` - 主程序文件（Python脚本）
+- `web_version.html` - Web版本（浏览器直接打开）
+- `requirements.txt` - Python依赖包
+- `README.md` - 项目说明（本文件）
+- `USAGE.md` - 详细使用说明
+
+## 💡 使用示例
+
+### 命令行示例
+```bash
+# 嗅探图片并保存结果
+python image_sniffer.py --cli --url https://example.com --min-size 50 --output images.json
+
+# 嗅探并直接下载
+python image_sniffer.py --cli --url https://example.com --download-dir ./downloads
+
+# 设置等待时间（适用于需要加载时间的页面）
+python image_sniffer.py --cli --url https://example.com --wait-time 10
+```
+
+### GUI使用流程
+1. 运行 `python image_sniffer.py`
+2. 输入要嗅探的网址
+3. 设置最小图片大小和等待时间
+4. 点击"开始嗅探"
+5. 查看结果列表，双击可预览图片
+6. 选择下载目录，点击"批量下载"
+
+### Web版本使用
+1. 用浏览器打开 `web_version.html`
+2. 输入网址和参数
+3. 点击"开始嗅探"
+4. 预览和下载图片
+
+## ⚠️ 注意事项
+
+1. **网络限制**：某些网站可能有防爬虫机制
+2. **跨域问题**：Web版本可能受到浏览器CORS限制
+3. **图片格式**：支持常见的图片格式（JPG、PNG、GIF、WebP等）
+4. **使用规范**：请遵守网站的robots.txt和使用条款
+5. **版权声明**：不要用于商业用途或侵犯版权
+
+## 🎯 适用场景
+
+- 网页图片批量下载
+- 设计素材收集
+- 图片资源整理
+- 网站图片分析
+- 学习研究用途
+
+## 🔧 技术特性
+
+- **多线程处理**：提高嗅探效率
+- **智能重试**：网络异常自动重试
+- **原图识别**：尝试获取高清原图
+- **进度反馈**：实时显示处理进度
+- **跨平台**：支持Windows、macOS、Linux
+
+## 📊 性能优化
+
+- 使用连接池复用HTTP连接
+- 并发处理图片信息获取
+- 智能超时和重试机制
+- 内存友好的流式下载
+
+---
+
+**完全免费 | 开源项目 | 持续更新**
+
+如有问题或建议，欢迎提交Issue！

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片资源嗅探工具 - Web版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            padding: 30px;
+        }
+        
+        .input-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+            align-items: end;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .progress-section {
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e1e5e9;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f4fd;
+            border-left: 4px solid #4facfe;
+            border-radius: 4px;
+            color: #333;
+        }
+        
+        .results-section {
+            margin-top: 30px;
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .image-card {
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .image-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+        
+        .image-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f8f9fa;
+        }
+        
+        .image-info {
+            padding: 15px;
+        }
+        
+        .image-filename {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            word-break: break-all;
+        }
+        
+        .image-details {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .image-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            flex: 1;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+        
+        .modal-content {
+            position: relative;
+            margin: 5% auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 800px;
+            background: white;
+            border-radius: 10px;
+        }
+        
+        .close {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .modal-image {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        
+        .error {
+            background: #fee;
+            border-left: 4px solid #f44;
+            color: #c33;
+        }
+        
+        .success {
+            background: #efe;
+            border-left: 4px solid #4c4;
+            color: #363;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 图片资源嗅探工具</h1>
+            <p>Web版 - 支持所有设备，无需安装</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <div class="form-group">
+                    <label for="urlInput">网址</label>
+                    <input type="url" id="urlInput" placeholder="请输入要嗅探的网址，例如：https://example.com">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="minSizeInput">最小大小 (KB)</label>
+                        <input type="number" id="minSizeInput" value="10" min="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <button class="btn" id="sniffBtn" onclick="startSniff()">开始嗅探</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="progress-section">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="status" id="statusText">就绪</div>
+            </div>
+            
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h3 id="resultsTitle">找到的图片</h3>
+                    <button class="btn btn-secondary" id="downloadAllBtn" onclick="downloadAll()">批量下载</button>
+                </div>
+                <div class="results-grid" id="resultsGrid"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 预览模态框 -->
+    <div id="previewModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <img id="modalImage" class="modal-image" alt="图片预览">
+            <div style="margin-top: 15px;">
+                <p><strong>文件名:</strong> <span id="modalFilename"></span></p>
+                <p><strong>大小:</strong> <span id="modalSize"></span></p>
+                <p><strong>URL:</strong> <span id="modalUrl" style="word-break: break-all;"></span></p>
+                <div style="margin-top: 15px;">
+                    <button class="btn" onclick="downloadSingle()">下载这张图片</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentImages = [];
+        let currentPreviewUrl = '';
+        
+        // 更新进度
+        function updateProgress(message, progress) {
+            document.getElementById('statusText').textContent = message;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+        
+        // 显示错误
+        function showError(message) {
+            const statusEl = document.getElementById('statusText');
+            statusEl.textContent = message;
+            statusEl.className = 'status error';
+        }
+        
+        // 显示成功
+        function showSuccess(message) {
+            const statusEl = document.getElementById('statusText');
+            statusEl.textContent = message;
+            statusEl.className = 'status success';
+        }
+        
+        // 重置状态
+        function resetStatus() {
+            const statusEl = document.getElementById('statusText');
+            statusEl.className = 'status';
+        }
+        
+        // 开始嗅探
+        async function startSniff() {
+            const url = document.getElementById('urlInput').value.trim();
+            const minSize = parseInt(document.getElementById('minSizeInput').value) || 10;
+            
+            if (!url) {
+                showError('请输入有效的网址');
+                return;
+            }
+            
+            // 禁用按钮
+            document.getElementById('sniffBtn').disabled = true;
+            document.getElementById('resultsSection').style.display = 'none';
+            resetStatus();
+            
+            try {
+                updateProgress('正在获取页面内容...', 10);
+                
+                // 由于浏览器的CORS限制，这里使用一个代理服务
+                // 在实际部署时，需要配置后端服务来处理跨域请求
+                const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+                
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+                
+                if (!data.contents) {
+                    throw new Error('无法获取页面内容');
+                }
+                
+                updateProgress('正在提取图片链接...', 30);
+                
+                const images = await extractImages(data.contents, url, minSize);
+                
+                updateProgress(`嗅探完成，找到 ${images.length} 张图片`, 100);
+                
+                displayResults(images);
+                
+            } catch (error) {
+                showError('嗅探失败: ' + error.message);
+            } finally {
+                document.getElementById('sniffBtn').disabled = false;
+            }
+        }
+        
+        // 提取图片
+        async function extractImages(html, baseUrl, minSizeKB) {
+            const imageUrls = new Set();
+            const minSizeBytes = minSizeKB * 1024;
+            
+            // 创建临时DOM来解析HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // 提取img标签的src
+            const imgTags = doc.querySelectorAll('img[src]');
+            imgTags.forEach(img => {
+                const src = img.getAttribute('src');
+                if (src) {
+                    const fullUrl = new URL(src, baseUrl).href;
+                    if (isImageUrl(fullUrl)) {
+                        imageUrls.add(fullUrl);
+                    }
+                }
+            });
+            
+            // 提取img标签的data-src（懒加载）
+            const lazyImgs = doc.querySelectorAll('img[data-src]');
+            lazyImgs.forEach(img => {
+                const src = img.getAttribute('data-src');
+                if (src) {
+                    const fullUrl = new URL(src, baseUrl).href;
+                    if (isImageUrl(fullUrl)) {
+                        imageUrls.add(fullUrl);
+                    }
+                }
+            });
+            
+            // 提取CSS背景图片
+            const bgPattern = /background-image:\s*url\(['"]?([^'")\s]+)['"]?\)/gi;
+            let match;
+            while ((match = bgPattern.exec(html)) !== null) {
+                try {
+                    const fullUrl = new URL(match[1], baseUrl).href;
+                    if (isImageUrl(fullUrl)) {
+                        imageUrls.add(fullUrl);
+                    }
+                } catch (e) {
+                    // 忽略无效URL
+                }
+            }
+            
+            updateProgress(`找到 ${imageUrls.size} 个图片链接，正在验证...`, 50);
+            
+            // 验证图片并获取信息
+            const validImages = [];
+            const urlArray = Array.from(imageUrls);
+            
+            for (let i = 0; i < urlArray.length; i++) {
+                try {
+                    const imgUrl = urlArray[i];
+                    
+                    // 由于CORS限制，我们无法直接检查图片大小
+                    // 这里简化处理，直接添加到结果中
+                    const filename = getFilenameFromUrl(imgUrl);
+                    
+                    validImages.push({
+                        url: imgUrl,
+                        filename: filename,
+                        size: 0, // 无法获取实际大小
+                        contentType: 'image/*'
+                    });
+                    
+                    const progress = 50 + (i + 1) / urlArray.length * 40;
+                    updateProgress(`已验证 ${i + 1}/${urlArray.length} 张图片`, progress);
+                    
+                } catch (error) {
+                    console.log('验证图片失败:', error);
+                }
+            }
+            
+            return validImages;
+        }
+        
+        // 判断是否为图片URL
+        function isImageUrl(url) {
+            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'];
+            const urlLower = url.toLowerCase();
+            return imageExtensions.some(ext => urlLower.includes(ext)) || urlLower.includes('image');
+        }
+        
+        // 从URL提取文件名
+        function getFilenameFromUrl(url) {
+            try {
+                const pathname = new URL(url).pathname;
+                const filename = pathname.split('/').pop();
+                return filename || 'image.jpg';
+            } catch (e) {
+                return 'image.jpg';
+            }
+        }
+        
+        // 显示结果
+        function displayResults(images) {
+            currentImages = images;
+            
+            if (images.length === 0) {
+                showError('未找到符合条件的图片');
+                return;
+            }
+            
+            showSuccess(`找到 ${images.length} 张图片`);
+            
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsGrid = document.getElementById('resultsGrid');
+            const resultsTitle = document.getElementById('resultsTitle');
+            
+            resultsTitle.textContent = `找到 ${images.length} 张图片`;
+            resultsGrid.innerHTML = '';
+            
+            images.forEach((img, index) => {
+                const card = createImageCard(img, index);
+                resultsGrid.appendChild(card);
+            });
+            
+            resultsSection.style.display = 'block';
+        }
+        
+        // 创建图片卡片
+        function createImageCard(img, index) {
+            const card = document.createElement('div');
+            card.className = 'image-card';
+            
+            card.innerHTML = `
+                <img class="image-preview" src="${img.url}" alt="${img.filename}" 
+                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuaXoOazleWKoOi9vTwvdGV4dD48L3N2Zz4='">
+                <div class="image-info">
+                    <div class="image-filename">${img.filename}</div>
+                    <div class="image-details">
+                        ${img.size > 0 ? `大小: ${(img.size / 1024).toFixed(1)} KB` : '大小: 未知'}
+                    </div>
+                    <div class="image-actions">
+                        <button class="btn btn-small" onclick="previewImage(${index})">预览</button>
+                        <button class="btn btn-small btn-secondary" onclick="downloadImage(${index})">下载</button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        // 预览图片
+        function previewImage(index) {
+            const img = currentImages[index];
+            currentPreviewUrl = img.url;
+            
+            document.getElementById('modalImage').src = img.url;
+            document.getElementById('modalFilename').textContent = img.filename;
+            document.getElementById('modalSize').textContent = img.size > 0 ? `${(img.size / 1024).toFixed(1)} KB` : '未知';
+            document.getElementById('modalUrl').textContent = img.url;
+            document.getElementById('previewModal').style.display = 'block';
+        }
+        
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('previewModal').style.display = 'none';
+        }
+        
+        // 下载单张图片
+        function downloadImage(index) {
+            const img = currentImages[index];
+            downloadSingleImage(img.url, img.filename);
+        }
+        
+        // 下载当前预览的图片
+        function downloadSingle() {
+            const filename = document.getElementById('modalFilename').textContent;
+            downloadSingleImage(currentPreviewUrl, filename);
+        }
+        
+        // 执行单张图片下载
+        function downloadSingleImage(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 批量下载
+        function downloadAll() {
+            if (currentImages.length === 0) {
+                showError('没有可下载的图片');
+                return;
+            }
+            
+            let downloaded = 0;
+            const total = currentImages.length;
+            
+            updateProgress(`正在下载 0/${total}`, 0);
+            
+            currentImages.forEach((img, index) => {
+                setTimeout(() => {
+                    downloadSingleImage(img.url, img.filename);
+                    downloaded++;
+                    
+                    const progress = (downloaded / total) * 100;
+                    updateProgress(`正在下载 ${downloaded}/${total}`, progress);
+                    
+                    if (downloaded === total) {
+                        showSuccess(`批量下载完成，共 ${total} 张图片`);
+                    }
+                }, index * 500); // 每500ms下载一张，避免浏览器限制
+            });
+        }
+        
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('previewModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+        
+        // 回车键触发搜索
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                startSniff();
+            }
+        });
+        
+        // 页面加载完成后的提示
+        window.addEventListener('load', function() {
+            updateProgress('就绪 - 请输入网址开始嗅探', 0);
+        });
+    </script>
+</body>
+</html>
