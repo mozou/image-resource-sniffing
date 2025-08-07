@@ -115,9 +115,6 @@ p4a.fork = kivy
 # (str) python-for-android branch to use, defaults to master
 p4a.branch = master
 
-# (str) python-for-android specific commit to use, defaults to HEAD, must be within p4a.branch
-p4a.commit = HEAD
-
 # (str) python-for-android git clone directory (if empty, it will be automatically cloned from github)
 p4a.source_dir =
 
@@ -129,6 +126,10 @@ p4a.whitelist =
 
 # (bool) indicates if you want to include sqlite3 so the internal sqlite3 will be used
 p4a.setup_py = False
+
+# (str) python-for-android specific commit to use, defaults to HEAD, must be within p4a.branch
+# 使用稳定的release版本
+p4a.commit = release-2023.06.21
 
 # (str) Bootstrap to use for android builds
 p4a.bootstrap = sdl2
