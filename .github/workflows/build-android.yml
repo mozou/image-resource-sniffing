@@ -15,39 +15,72 @@ jobs:
     - name: 检出代码
       uses: actions/checkout@v4
       
-    - name: 构建APK使用Docker
+    - name: 构建APK使用自定义Docker
       run: |
-        # 创建Dockerfile
+        # 创建自定义Dockerfile
         cat > Dockerfile << 'EOF'
-        FROM kivy/buildozer:latest
+        FROM ubuntu:20.04
 
-        # 设置工作目录
+        # 避免交互式安装
+        ENV DEBIAN_FRONTEND=noninteractive
+        ENV TZ=Asia/Shanghai
+
+        # 安装基础依赖
+        RUN apt-get update && apt-get install -y \
+            python3 \
+            python3-pip \
+            python3-dev \
+            build-essential \
+            git \
+            unzip \
+            zip \
+            openjdk-8-jdk \
+            wget \
+            curl \
+            && rm -rf /var/lib/apt/lists/*
+
+        # 设置Java环境
+        ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+        # 安装Python依赖
+        RUN pip3 install --upgrade pip
+        RUN pip3 install buildozer==1.4.0 cython==0.29.33 kivy==2.1.0 requests
+
+        # 创建工作目录
         WORKDIR /app
 
         # 复制项目文件
         COPY . /app/
 
-        # 设置环境变量
-        ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-        ENV ANDROID_HOME=/home/user/.buildozer/android/platform/android-sdk
-        ENV ANDROID_SDK_ROOT=$ANDROID_HOME
-        ENV PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+        # 设置权限
+        RUN chmod -R 755 /app
 
         # 构建APK
-        RUN buildozer android debug
+        CMD ["buildozer", "android", "debug"]
         EOF
         
-        # 构建Docker镜像并运行
+        # 构建Docker镜像
+        echo "🔨 构建Docker镜像..."
         docker build -t image-sniffer-build .
-        docker run --name build-container image-sniffer-build
         
-        # 从容器中复制APK文件
-        docker cp build-container:/app/bin ./bin
+        # 运行容器构建APK
+        echo "🚀 开始构建APK..."
+        docker run --name build-container -v $(pwd)/bin:/app/bin image-sniffer-build
+        
+        # 检查构建结果
+        if [ -f "bin/*.apk" ]; then
+          echo "🎉 构建成功！"
+          ls -la bin/
+        else
+          echo "❌ 构建失败，检查容器日志..."
+          docker logs build-container
+        fi
         
         # 清理容器
-        docker rm build-container
+        docker rm build-container || true
         
     - name: 上传APK文件
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: 图片资源嗅探工具-debug
@@ -55,7 +88,7 @@ jobs:
         retention-days: 30
         
     - name: 创建Release
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main' && success()
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ github.run_number }}

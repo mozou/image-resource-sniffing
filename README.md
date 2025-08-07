@@ -33,20 +33,30 @@
 
 ### GitHub Actions构建（推荐）
 
-使用GitHub Actions可以在云端自动构建APK，无需本地环境配置：
+我们提供了多种构建方案：
 
-1. **推送代码到GitHub**
+**方案一：Docker自动构建**
 ```bash
-git clone https://github.com/您的用户名/image-resource-sniffer.git
-cd image-resource-sniffer
 git add .
 git commit -m "更新代码"
 git push origin main
 ```
+推送后会自动使用Docker构建APK，避免环境配置问题。
 
-2. **自动构建**
-   - 推送后会自动触发构建
-   - 构建完成后在Releases页面下载APK
+**方案二：手动触发备用构建**
+1. 进入GitHub仓库的Actions页面
+2. 选择"构建Android APK (备用方案)"
+3. 点击"Run workflow"手动触发
+
+**方案三：本地构建**
+```bash
+# Linux/Mac
+chmod +x build_local.sh
+./build_local.sh
+
+# Windows
+build_local.bat
+```
 
 详细说明请参考：[README_GITHUB_ACTIONS.md](README_GITHUB_ACTIONS.md)
 
